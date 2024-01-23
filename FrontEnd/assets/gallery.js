@@ -176,25 +176,3 @@ function gestion() {
         }
     }
 }
-
-function genererProjetsModale(projets) {
-    // Récupération de l'élément du DOM qui accueillera les projets de la modale
-    const divGalerieModale = document.querySelector(".modal-gallery");
-    divGalerieModale.innerHTML = "";
-
-    for (let i = 0; i < projets.length; i++) {
-        const projet = projets[i];
-
-        // Création d’une balise dédiée à un projet
-        const projetElement = document.createElement("figure");
-        projetElement.dataset.id = projet.id;
-
-        // Création des balises
-        const imageElement = document.createElement("img");
-        imageElement.src = projet.imageUrl;
-        imageElement.classList.add("modal-image");
-
-        const iconeElement = document.createElement("i");
-        iconeElement.classList.add("fa-regular", "fa-trash-can");
-        // Appel de la fonction deleteProject lorsque l'icône de poubelle est cliquée
-        iconeElement.addEventListener("click", handleClick);
