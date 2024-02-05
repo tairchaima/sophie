@@ -421,3 +421,132 @@ function optionsFormulaire(categoriesSet) {
     }
 }
 
+function updateValidateBtn() {
+    const miniatureImage = document.querySelector(".miniature-image");
+    const titleInput = document.querySelector("#title").value;
+    const categoryInput = document.querySelector("#categoriesOption").value;
+    const validateBtn = document.querySelector(".btn-validate");
+
+    if (miniatureImage.src !== "" && titleInput !== "" && categoryInput !== "") {
+        // Changement d'aspect du bouton Valider 
+        validateBtn.style.background = "#1d6154";
+        validateBtn.style.cursor = "pointer";
+    } else {
+        validateBtn.style.background = "#a7a7a7";
+        validateBtn.style.cursor = "default";
+    }
+}
+
+async function uploader(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    let fileInput = document.querySelector("#fileInput").files[0];
+    let titleInput = document.querySelector("#title").value;
+    let categoryInput = document.querySelector("#categoriesOption").value;
+
+    if (!fileInput) {
+        console.error("Aucun fichier sélectionné");
+        return;
+    }
+
+    // Récupération du token dans le local storage
+    let monToken = localStorage.getItem("token");
+
+    const formData = new FormData();
+    formData.append("image", fileInput);
+    formData.append("title", titleInput);
+    formData.append("category", categoryInput);
+
+    try {
+        // Requête Post à l'API
+        const response = await fetch("http://localhost:5678/api/works", {
+            method: "POST",
+            headers: {
+                'Accept': '*/*',
+                'Authorization': `Bearer ${monToken}`,
+            },
+            body: formData
+        })
+
+        // Vérification de la réponse 
+        if (response.status === 400) {
+            // Message d’erreur si le formulaire n’est pas correctement rempli
+            alert("Erreur de validation du formulaire. Veuillez remplir entièrement le formulaire.");
+        }
+        if (response.status === 401) {
+            throw new Error("Non autorisé.");
+        }
+        if (response.status === 500) {
+            throw new Error("Comportement inattendu.");
+        }
+        if (response.status === 201 && fileInput !== "" && titleInput !== "" && categoryInput !== "") {
+            // Changement d'aspect du bouton Valider et envoi du projet
+            updateValidateBtn();
+            // Réponse de l'API si le formulaire est correctement envoyé 
+            const responseData = await response.json();
+            console.log("Réponse de l'API :", responseData);
+            // Actualisation dynamique du DOM 
+            const Galerie = document.querySelector(".gallery");
+            Galerie.innerHTML = "";
+            await works();
+            // fermeture de la modale 
+            document.querySelector(".modal-container").style.display = "none";
+            // En cas de ré-ouverture de la modale: réinitialisation du formulaire 
+            restoreInitialModal();
+        }
+    } catch (error) {
+        console.error("Erreur lors de la requête d'envoi")
+    }
+}
+
+async function deleteProject(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const trashCan = event.target;
+    // projet dans lequel se trouve l'icône de poubelle 
+    const figure = trashCan.closest("figure");
+    // Obtention de l'ID du projet dans lequel se trouve l'icône de poubelle
+    const projectID = figure.getAttribute("data-id");
+    // Récupération du token dans le local storage
+    let monToken = localStorage.getItem("token");
+
+    try {
+        // Requête DELETE à l'API en utilisant l'ID du projet
+        const response = await fetch(`http://localhost:5678/api/works/${projectID}`, {
+            method: "DELETE",
+            headers: {
+                'Accept': '*/*',
+                'Authorization': `Bearer ${monToken}`,
+            },
+        })
+        // Vérification de la réponse 
+        if (response.status === 401) {
+            throw new Error("Non autorisé.");
+        }
+        if (response.status === 500) {
+            throw new Error("Comportement inattendu.");
+        }
+        if (response.status === 200 || response.status === 204) {
+            // Supression du projet de la galerie modale 
+            figure.remove();
+            // Supression du projet de la galerie
+            const Galerie = document.querySelector(".gallery");
+            Galerie.innerHTML = "";
+            await works();
+        }
+    } catch (error) {
+        console.error("Erreur lors de la requête de suppression:", error);
+    }
+}
+
+async function indexPage() {
+    await categories();
+    await works();
+    gestion();
+    ajoutPhoto();
+}
+
+// les fonctions sont exécutées lorsque la page est entièrement chargée
+document.addEventListener("DOMContentLoaded", indexPage);
