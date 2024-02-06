@@ -418,7 +418,7 @@ function optionsFormulaire(categoriesSet) {
                 select.appendChild(optionElement);
             }
         }
-    }
+    } 
 }
 
 function updateValidateBtn() {
